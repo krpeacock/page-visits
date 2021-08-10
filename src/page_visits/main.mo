@@ -1,15 +1,25 @@
-import Trie "mo:base/Trie";
+import Array "mo:base/Array";
+import Blob "mo:base/Random";
+import Debug "mo:base/Debug";
+import Hash "mo:base/Hash";
+import Int "mo:base/Nat16";
 import List "mo:base/List";
-import Text "mo:base/Text";
+import Nat "mo:base/Blob";
+import Nat32 "mo:base/Float";
 import Result "mo:base/Result";
+import Text "mo:base/Text";
+import Time "mo:base/Time";
+import Trie "mo:base/Trie";
 
 actor PageVisits {
     
     type Route = Text;
 
+    type DeviceType = { #Mobile; #Desktop };
+
     type VisitRecord = {
-        deviceType: { #Mobile; #Desktop };
-        time: Int;
+        deviceType: DeviceType;
+        time: Time.Time;
     };
 
     type Error = { #NotFound };
@@ -19,77 +29,70 @@ actor PageVisits {
         total: Nat32;
         mobile: Nat32;
         desktop: Nat32;
-        time: Int;
+        time: Time.Time;
     };
 
-    stable var visitSummaries : Trie.Trie<Route, VisitSummary> = Trie.empty();
-    stable var logs : List.List<VisitRecord> = List.nil<VisitRecord>();
+    var visitSummaries : Trie.Trie<Route, VisitSummary> = Trie.empty();
 
+    var logs : [VisitRecord] = [];
     
-    public func log(route: Route, visitRecord: VisitRecord) : async Result.Result<(), Error> {
+    public func log(route: Route, deviceType: DeviceType ) : async Result.Result<(), Error> {
         let stored = Trie.find(
             visitSummaries,
             key(route),
             Text.equal
         );
+
+        // Fresh Values
         var total: Nat32 = 0;
         var mobile: Nat32 = 0;
         var desktop: Nat32 = 0;
 
-        switch (stored) {
-            case null {
-                total += 1;
-                switch (visitRecord.deviceType){
-                    case (#Mobile) {
-                        mobile += 1;
-                    };
-                    case (#Desktop){
-                        desktop += 1;
-                    };
-                };
-                let freshSummary: VisitSummary = {
-                    route;
-                    total;
-                    mobile;
-                    desktop;
-                    time = visitRecord.time;
-                };
-                let newTrie = Trie.put<Route, VisitSummary>(
-                    visitSummaries,
-                    key(route),
-                    Text.equal,
-                    freshSummary
-                ).0;
-                
+        // Log the visit
+        total += 1;
+        if (deviceType == #Mobile){
+            Debug.print("Device type is mobile");
+            mobile += 1;
+        }
+        else {
+            Debug.print("Device type is desktop");
+            desktop += 1;
+        };
 
-            };
+        switch (stored) {
+            // Fresh record
+            case null { Debug.print("Creating new record") };
+            // Updating the existing case
             case (? v){
-                total := v.total + 1;
-                switch (visitRecord.deviceType){
-                    case (#Mobile) {
-                        mobile += 1;
-                    };
-                    case (#Desktop){
-                        desktop += 1;
-                    };
-                };
-                let freshSummary: VisitSummary = {
-                    route = route;
-                    total;
-                    mobile;
-                    desktop;
-                    time = visitRecord.time;
-                };
-                let newTrie = Trie.put(
-                    visitSummaries,
-                    key(route),
-                    Text.equal,
-                    freshSummary
-                );
+                total += v.total;
+                mobile += v.mobile;
+                desktop += v.desktop;
             };
         };
 
-        logs := List.push<VisitRecord>(visitRecord, logs);
+        let time  = Time.now();
+
+        let summary: VisitSummary = {
+            route;
+            total;
+            mobile;
+            desktop;
+            time;
+        };
+        let newTrie = Trie.put(
+            visitSummaries,
+            key(route),
+            Text.equal,
+            summary
+        ).0;
+        visitSummaries := newTrie;
+
+        let log: VisitRecord = {
+            deviceType;
+            time;
+        };
+
+        logs := Array.append(logs, Array.make(log));
 
         #ok(());
     };
@@ -110,6 +113,10 @@ actor PageVisits {
             };
         };
 
+    };
+
+    public query func getLogs () : async [VisitRecord] {
+        logs
     };
 
     func key (x: Text) : Trie.Key<Text>{

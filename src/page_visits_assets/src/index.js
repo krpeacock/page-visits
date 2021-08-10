@@ -1,9 +1,26 @@
 import { page_visits } from "../../declarations/page_visits";
 
-document.getElementById("clickMeBtn").addEventListener("click", async () => {
-  const name = document.getElementById("name").value.toString();
-  // Interact with page_visits actor, calling the greet method
-  // const greeting = await page_visits.greet(name);
+const deviceType =
+  /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+    navigator.userAgent
+  )
+    ? { Mobile: null }
+    : { Desktop: null };
 
-  document.getElementById("greeting").innerText = greeting;
+page_visits.log(location.href, deviceType).then(async (response) => {
+  console.log(response);
+  updatePage();
+});
+
+async function updatePage() {
+  const currentCount = await page_visits.getSummary(location.href);
+  console.log(currentCount);
+  document.querySelector("#total").innerText = currentCount.ok?.total;
+  document.querySelector("#mobile").innerText = currentCount.ok?.mobile;
+  document.querySelector("#desktop").innerText = currentCount.ok?.desktop;
+}
+updatePage();
+
+page_visits.getLogs().then((logs) => {
+  console.log(logs);
 });

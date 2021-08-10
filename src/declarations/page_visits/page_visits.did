@@ -1,0 +1,36 @@
+type VisitSummary = 
+ record {
+   desktop: nat32;
+   mobile: nat32;
+   route: Route;
+   time: Time;
+   total: nat32;
+ };
+type VisitRecord = 
+ record {
+   deviceType: DeviceType;
+   time: Time;
+ };
+type Time = int;
+type Route = text;
+type Result_1 = 
+ variant {
+   err: Error;
+   ok: VisitSummary;
+ };
+type Result = 
+ variant {
+   err: Error;
+   ok;
+ };
+type Error = variant {NotFound;};
+type DeviceType = 
+ variant {
+   Desktop;
+   Mobile;
+ };
+service : {
+  getLogs: () -> (vec VisitRecord) query;
+  getSummary: (Route) -> (Result_1) query;
+  log: (Route, DeviceType) -> (Result);
+}
