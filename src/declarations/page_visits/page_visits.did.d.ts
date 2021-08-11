@@ -17,6 +17,7 @@ export interface VisitSummary {
   'route' : Route,
 }
 export interface _SERVICE {
+  'getKeys' : () => Promise<Array<Route>>,
   'getLogs' : () => Promise<Array<VisitRecord>>,
   'getSummary' : (arg_0: Route) => Promise<Result_1>,
   'log' : (arg_0: Route, arg_1: DeviceType) => Promise<Result>,

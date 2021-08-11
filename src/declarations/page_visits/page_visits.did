@@ -30,6 +30,7 @@ type DeviceType =
    Mobile;
  };
 service : {
+  getKeys: () -> (vec Route) query;
   getLogs: () -> (vec VisitRecord) query;
   getSummary: (Route) -> (Result_1) query;
   log: (Route, DeviceType) -> (Result);

@@ -32,9 +32,9 @@ actor PageVisits {
         time: Time.Time;
     };
 
-    var visitSummaries : Trie.Trie<Route, VisitSummary> = Trie.empty();
+    stable var visitSummaries : Trie.Trie<Route, VisitSummary> = Trie.empty();
 
-    var logs : [VisitRecord] = [];
+    stable var logs : [VisitRecord] = [];
     
     public func log(route: Route, deviceType: DeviceType ) : async Result.Result<(), Error> {
         let stored = Trie.find(
@@ -113,6 +113,13 @@ actor PageVisits {
             };
         };
 
+    };
+
+    public query func getKeys(): async [Route] {
+        return  Trie.toArray<Route, VisitSummary, Route>(
+            visitSummaries,
+            func (k , v) {  k  }
+        );
     };
 
     public query func getLogs () : async [VisitRecord] {
