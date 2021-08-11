@@ -20,6 +20,7 @@ actor PageVisits {
     type VisitRecord = {
         deviceType: DeviceType;
         time: Time.Time;
+        route: Route;
     };
 
     type Error = { #NotFound };
@@ -90,6 +91,7 @@ actor PageVisits {
         let log: VisitRecord = {
             deviceType;
             time;
+            route;
         };
 
         logs := Array.append(logs, Array.make(log));
